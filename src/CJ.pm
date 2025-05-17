@@ -66,9 +66,7 @@ sub init{
     
     # record the md5 file of ssh_config
     &CJ::create_ssh_config_md5();
-    
-    
-        # Skip automatic cloud updates during initialization
+
 
 
 }

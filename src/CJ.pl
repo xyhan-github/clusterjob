@@ -80,7 +80,6 @@ if( -d "$info_dir" ){
 &CJ::my_system("rm $CJlog_error") unless (! -f $CJlog_error);
 
 #=========================================
-}
 
 my $spec = <<'EOSPEC';
       prompt 	      opens CJ prompt command [undocumented]
