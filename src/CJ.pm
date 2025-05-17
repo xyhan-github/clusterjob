@@ -69,20 +69,7 @@ sub init{
     &CJ::create_ssh_config_md5();
     
     
-	if(defined($CJKEY)){
-		# Add this agent to the the list of agents
-		eval{
-			CJ::add_agent_to_remote();
-			};
-		if( $@ ){
-			if($@->message eq '401 Unauthorized'){
-			CJ::warning("Your CJKEY is invalid. Please provide a valid one and then issue 'cj sync' ");
-			}else{
-			CJ::warning("Unable to connect to CJ database $@");	
-			}
-		}
-		&CJ::AutoSync() unless ($@);
-	}
+        # Skip automatic Firebase updates during initialization
 
 
 }
@@ -539,10 +526,7 @@ my $newinfo = &CJ::add_change_to_run_history($info->{'pid'}, $change, $type);
 
 &CJ::add_to_history($newinfo,$date,$type);
 
-# write runinfo to FB as well
-my $timestamp  = $date->{epoch};    
-my $inform = 1;
-&CJ::write2firebase($info->{'pid'},$newinfo, $timestamp, $inform);
+
 
 exit 0;
 }
@@ -958,10 +942,7 @@ sub clean
 my $change={date => $date, agent=>$AgentID};
 my $newinfo = &CJ::add_change_to_run_history($pid, $change, "clean");
 
-my $timestamp = $date->{epoch};
-# Write runinfo to FB as well
-my $inform = 1;
-&CJ::write2firebase($info->{'pid'},$newinfo, $timestamp, $inform);
+
 	    
     
 exit 0;
