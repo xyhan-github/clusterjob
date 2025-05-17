@@ -1696,13 +1696,14 @@ sub show_cluster_config{
 
 sub cluster_config_template{
     # for sorting purposes
-    my @config_keys=('Host','User','Bqs','Alloc','Repo','MAT','MATlib','Python','Pythonlib','R','Rlib');
+    my @config_keys=('Host','User','Bqs','Alloc','Repo','CondaRepo','MAT','MATlib','Python','Pythonlib','R','Rlib');
     my $cluster_config = {
         'Host' => {example=>'35.185.238.124', default=>undef},
         'User' => {example=>$CJID, default=>undef},
         'Bqs'  => {example=>undef, default=>'SLURM'},
         'Alloc'  => {example=>'-n 1 -N 1 -p gpu', default=>undef},
         'Repo' => {example=>'/home/ubuntu/CJRepo_Remote',default=>undef},
+        'CondaRepo' => {example=>'/home/ubuntu/CJConda', default=>undef},
         'MAT'  => {example=>undef,default=>'matlab/r2016b'},
         'MATlib' => {example=>undef,default=>'$app_install_dir/cvx:$app_install_dir/mosek/7/toolbox/r2013a'},
         'Python' => {example=>undef,default=>'python3.4'},
@@ -1962,6 +1963,10 @@ sub parse_ssh_config{
     
     my ($remote_repo)  = $this_machine_string =~ /Repo[\t\s]+?(.*)/i ;
     $remote_repo   = remove_white_space($remote_repo);
+
+    my ($conda_repo)  = $this_machine_string =~ /CondaRepo[\t\s]+?(.*)/i ;
+    $conda_repo   = remove_white_space($conda_repo);
+    $conda_repo   = $remote_repo if (!defined $conda_repo || $conda_repo eq '');
     
     my ($remote_matlab_lib)  =$this_machine_string =~ /MATlib[\t\s]+?(.*)/i;
     $remote_matlab_lib =remove_white_space($remote_matlab_lib);
@@ -1992,6 +1997,7 @@ sub parse_ssh_config{
     $ssh_config->{'bqs'}             = $bqs;
     $ssh_config->{'alloc'}           = $alloc;
     $ssh_config->{'remote_repo'}     = $remote_repo;
+    $ssh_config->{'conda_repo'}      = $conda_repo;
     $ssh_config->{'matlib'}          = $remote_matlab_lib;
     $ssh_config->{'mat'}             = $remote_matlab_module;
     $ssh_config->{'user'}            = $user;
