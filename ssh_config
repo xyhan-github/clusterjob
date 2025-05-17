@@ -3,6 +3,7 @@ Host		login.sherlock.stanford.edu
 User		monajemi
 Bqs		SLURM
 Repo		/scratch/users/monajemi/CJRepo_Remote
+CondaRepo       /scratch/users/monajemi/CJConda
 MAT     	matlab/R2017a
 MATlib		~/BPDN/CVX/cvx:~/mosek/7/toolbox/r2013a
 Python		python/3.6

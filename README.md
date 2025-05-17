@@ -52,4 +52,11 @@ year={2019},
 
 Copyright 2015 Hatef Monajemi (monajemi@stanford.edu)
 
+## Cluster configuration
+
+Each cluster is described in the `ssh_config` file.  In addition to the existing
+`Repo` entry that controls where run data is stored, you can optionally specify
+`CondaRepo` to choose the directory where CJ installs Miniconda on that machine.
+If omitted, `CondaRepo` defaults to the same path as `Repo`.
+
 

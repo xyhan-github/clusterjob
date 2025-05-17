@@ -61,7 +61,9 @@ sub __apply_install{
     $cmd = "ssh $ssh->{account} 'cd \$HOME && bash -l $filename' ";
     system($cmd);
     
-    $cmd = "ssh $ssh->{account} 'if [ -d \$HOME/$self->{path} ] ; then mv \$HOME/$filename \$HOME/$self->{path}/; fi' ";
+    my $basepath = $installpath;
+    $basepath =~ s#/[^/]+$##;
+    $cmd = "ssh $ssh->{account} 'if [ -d $basepath ] ; then mv \$HOME/$filename $basepath/; fi' ";
     system($cmd);
     
     &CJ::message("----- END BASH ON $self->{'machine'}-----",1);
@@ -554,7 +556,9 @@ my ($force_tag) = @_;
     
 my $miniconda = "Miniconda3-latest-Linux-x86_64";
 my $distro  = "https://repo.continuum.io/miniconda/${miniconda}.sh";
-my $installpath = "\$HOME/$self->{path}/miniconda";
+my $ssh = CJ::host($self->{'machine'});
+my $conda_base  = defined $ssh->{conda_repo} ? $ssh->{conda_repo} : $ssh->{remote_repo};
+my $installpath = "$conda_base/$self->{path}/miniconda";
     
 
 # -------------------
