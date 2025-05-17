@@ -4,7 +4,6 @@ package CJ;
 use strict;
 use warnings;
 use CJ::CJVars;
-use CJ::Sync;
 use CJ::Install;
 use Term::ReadLine;
 use Time::Local;
@@ -67,9 +66,7 @@ sub init{
     
     # record the md5 file of ssh_config
     &CJ::create_ssh_config_md5();
-    
-    
-        # Skip automatic Firebase updates during initialization
+
 
 
 }
@@ -203,169 +200,6 @@ sub check_hash {
 
    return 1;
 }
-
-
-sub write2firebase
-{
-	my ($pid, $runinfo, $timestamp, $inform) = @_;
-	
-    
-    $timestamp = 0+$timestamp;  # treat time stamp as number for JSON. Has to be explicit. Otherwise you get qouted stuff in Firebase
-    
-	return if not defined($CJKEY);	
-	
-    my $firebase = Firebase->new(firebase => $firebase_name, jwt => $CJKEY, api_key => $CJ_API_KEY);
-	# Check to see if this agent is defined in the agents 
-	# if not add it.
-	&CJ::add_agent_to_remote($AgentID);
-	
-	
-	my $exists = defined( $firebase->get("users/${CJID}/pid_list/${pid}") );
-	
-	my $epoch = $runinfo->{date}->{epoch};
-	my $pid_head = substr($pid,0,8);  #short_pid
-	
-	
-	if($exists){
-		# This is a change
-		# here timestamp may be different than epoch; 
-		# for example when we clean $timestamp is going 
-		# to be the time of cleaning
-		my $result   = $firebase->patch("users/${CJID}/pid_list/${pid}",{"timestamp" => $timestamp, "short_pid" => $pid_head , "info" => $runinfo});
-
-		# Update the push timestamp 
-	    $result = $firebase->patch("users/${CJID}/agents/$AgentID", {"push_timestamp"=> $timestamp} ); 
-		
-	}else{
-		
-		# This is either new or hasn't been pushed before
-		my $last = $firebase->get("users/${CJID}/last_instance");
-		my $remote_last_epoch = defined($last) ? $last->{"epoch"} : 0;
-		$firebase->patch("users/${CJID}/last_instance", {"pid" => $pid, "epoch"=> $epoch} ) if ( $epoch >  $remote_last_epoch ); 
-		# Add last instance for this agentm and update push ts. 
-	    my $result = $firebase->patch("users/${CJID}/agents/$AgentID", {"last_instance" => {"pid" => $pid, "epoch"=> $epoch}, "push_timestamp"=> $epoch} ); 		
-		$result   = $firebase->patch("users/${CJID}/pid_list/${pid}",{"timestamp" => $timestamp, "short_pid" => $pid_head , "info" => $runinfo});
-		
-		
-	}
-	
-	# Inform All other agents of this change (SyncReq) 
-	&CJ::informOtherAgents($pid, $timestamp) if $inform;	
-	&CJ::update_local_push_timestamp($timestamp);	
-
-}
-
-
-
-sub add_agent_to_remote{
-	# This is the first time agent is added.
-    my $firebase = Firebase->new(firebase => $firebase_name, jwt => $CJKEY, api_key => $CJ_API_KEY);
-    # make sure there is internet
-    return if (not defined $localIP);
-	# make sure agent doesnt exist already
-    return if eval {my $fb_get = $firebase->get("users/${CJID}/agents/$AgentID")};
-    my $agentHash = {"SyncReq" => "null", "last_instance" => "null", "push_timestamp" =>0  ,"pull_timestamp" => 0};
-    my $result = $firebase->patch("users/${CJID}/agents/$AgentID",  $agentHash);
-}
-
-sub informOtherAgents{
-	my ($pid,$timestamp) = @_;
-	
-    my $firebase = Firebase->new(firebase => $firebase_name, jwt => $CJKEY, api_key => $CJ_API_KEY);
-	# Get Agent List
-	my $fb_get;
-	return unless eval {$fb_get = $firebase->get("users/${CJID}/agents")};
-	
-	my @agents= keys %$fb_get;
-	return unless @agents;
-	
-	foreach my $agent (@agents){
-	 		
-		if($agent ne $AgentID)	{
-			
-				my $todo={};
-		 
-				# If prior values exist
-		 		if( &CJ::check_hash($fb_get->{$agent}, ["SyncReq"]) )
-		 	   	{	 
-						my $hash = $fb_get->{$agent}->{SyncReq};
-						$todo =  $hash unless ($hash eq "null") ;	
-		 		}
-				$todo->{$pid} = $timestamp ;
-				my $result = $firebase->patch("users/${CJID}/agents/$agent", {"SyncReq" => $todo} ); 	
-			}
-		
-	  }	
-	
-
-
-
-}
-
-
-
-sub sync_forced
-{
-	my ($status) = @_;
-
-
-	return if $status;   #if AutoSync has been done, don't sync it again.
-
-	my $sync = CJ::Sync->new($AgentID);
-	&CJ::sync($sync);
-	&CJ::message("All up-to-date.");
-}
-
-sub  sync
-{
-	my ($sync) = @_;
-	CJ::err("Input should be a CJ::Sync object") unless $sync->isa("CJ::Sync");
-	&CJ::message("Syncing...");
-	$sync->request() ;	# Sync changes that are requested by other agents
-	$sync->pull_timestamp();  # Sync based on pull_timestamp
-	$sync->push_timestamp();  # Sync based on pull_timestamp
-	updateLastSync();
-}
-
-sub AutoSync{
-	my $sync = CJ::Sync->new($AgentID);
-	my $lastSync = getLastSync();
-	return if ( lc($sync->{type}) ne "auto");
-	my $diff = time - $lastSync;
-	my $interval = $sync->{interval};
-	#print $diff . "\n";
-	#print $interval;
-	return if( $diff <= $interval); 
-	&CJ::sync($sync);
-	return 1;
-}
-
-sub updateLastSync
-{
-	
-	my $now = time;
-	CJ::create_lastSync_file();
-	&CJ::writeFile($lastSync_file, $now);
-	return 1;
-}
-
-sub getLastSync
-{
-	    CJ::create_lastSync_file();  # if it doesnt exist. It creates one;
-		
-		# Get local epoch
-		my $lastSync   =   `sed -n '1{p;q;}' $lastSync_file`; chomp($lastSync);
-	
-		if( (not defined $lastSync) || ($lastSync eq "") ){
-			return 0;
-		}else{
-			return $lastSync;
-		}
-
-	
-}
-
-
 
 
 sub rerun
@@ -1637,7 +1471,6 @@ sub add_record{
 	&CJ::add_to_history($info, $info->{date}, $info->{runflag});
 	&CJ::add_to_run_history($info);
 	&CJ::add_to_pid_timestamp( { $info->{pid} => $info->{date}{epoch} }  );
-	&CJ::update_local_push_timestamp($info->{date}{epoch});
 	&CJ::update_last_instance($info->{'pid'});
 }
 
@@ -2050,12 +1883,6 @@ sub update_last_instance
 	&CJ::writeFile($last_instance_file, $pid);
 }
 
-sub update_local_push_timestamp
-{
-	my ($timestamp) = @_;
-# create the file if it doesnt exist.	
-&CJ::writeFile($local_push_timestamp_file, $timestamp)	
-}
 
 
 sub read_pid_timestamp
@@ -2882,8 +2709,6 @@ sub create_info_files{
 	&CJ::create_cmd_file();	
 	&CJ::create_run_history_file();
 	&CJ::create_pid_timestamp_file();
-	&CJ::create_local_push_timestamp_file();
-	&CJ::create_lastSync_file();
 }
 
 sub create_history_file{	
@@ -2900,18 +2725,6 @@ if( ! -f $history_file ){
 	 
 }
 	
-}
-
-sub create_lastSync_file{
-		
-		if (! -f $lastSync_file) {
-		&CJ::touch($lastSync_file);
-		&CJ::writeFile($lastSync_file, 0);
-	    }
-}
-
-sub create_local_push_timestamp_file{
-		&CJ::touch($local_push_timestamp_file) unless (-f $local_push_timestamp_file) ;	
 }
 
 sub create_cmd_file{

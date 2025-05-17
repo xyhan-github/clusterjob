@@ -53,12 +53,9 @@ our $history_file       = "$info_dir/history.info";
 our $cmd_history_file   = "$info_dir/cmd_history.info";
 our $run_history_file   = "$info_dir/run_history.info";
 our $pid_timestamp_file = "$info_dir/pid_timestamp.info";
-our $local_push_timestamp_file = "$info_dir/local_push_timestamp";
-our $lastSync_file      = "$info_dir/last_sync";
 our $save_info_file     = "$info_dir/save.info";
 our $ssh_config_file    = "$install_dir/ssh_config";
 our $remote_config_file = "$install_dir/cj_config";
-our $firebase_name		= "clusterjob-78552";
 
 our $app_list_file      = "$src_dir/.app_list";
 our $ssh_config_md5     = "$install_dir/.ssh_config.md5";
@@ -66,7 +63,6 @@ our $app_install_dir    = "CJinstalled";
 
 
 # Database related. Hard-coded. User need not to worry about this. Not sensitive info.
-our $CJ_API_KEY="AIzaSyDWxanHy2j8rWjeXYjJF4tULX60d1Siq9A";
 
 
 # Read AgentID
@@ -85,9 +81,7 @@ if($AgentID){$AgentID =~ s/^\s+|\s+$//g};
 }
 
 
-# Read CJID and CJKEY
 our $CJID =undef;
-our $CJKEY=undef;
 
 
 my $lines;
@@ -97,7 +91,6 @@ $lines = <$FILE>;
 close ($FILE);
 
 my ($ID) = $lines =~ /^CJID(.*)/im;  if($ID){$ID =~ s/^\s+|\s+$//g};
-my ($KEY) = $lines =~/^CJKEY(.*)/im; if($KEY) {$KEY=~ s/^\s+|\s+$//g};
 
 if($ID){
 	$CJID = $ID;
@@ -105,14 +98,8 @@ if($ID){
     die(' ' x 5 . "CJerr::Please provide your CJ ID in $remote_config_file\n");
 }
 
-if($KEY){
-	$CJKEY=$KEY;
-}
-
-
-
 # Export global variables
-our @EXPORT = qw( $lastSync_file $local_push_timestamp_file $pid_timestamp_file $firebase_name $AgentIDPATH $AgentID $CJID $CJKEY $CJ_API_KEY $info_dir $src_dir $install_dir $localPrefix $savePrefix $last_instance_file $get_tmp_dir $history_file $cmd_history_file $run_history_file $save_info_file $ssh_config_file $remote_config_file $CJerrorlog $CJlog_dir $CJlog_out $CJlog_error $localIP $localUserName $app_list_file $ssh_config_md5 $app_install_dir);
+our @EXPORT = qw( $pid_timestamp_file $AgentIDPATH $AgentID $CJID $info_dir $src_dir $install_dir $localPrefix $savePrefix $last_instance_file $get_tmp_dir $history_file $cmd_history_file $run_history_file $save_info_file $ssh_config_file $remote_config_file $CJlog_dir $CJlog_out $CJlog_error $localIP $localUserName $app_list_file $ssh_config_md5 $app_install_dir );
 
 
 

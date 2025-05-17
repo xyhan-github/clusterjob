@@ -6,7 +6,6 @@
 use strict;
 use FindBin qw($Bin);
 use lib "$Bin";  #for testing
-use lib "$Bin/external/firebase/lib";  
 use lib "$Bin/external/ouch/lib";
 
 use Ouch;
@@ -26,7 +25,7 @@ use JSON::PP;
 #use Term::ANSIColor qw(:constants); # for changing terminal text colors
 #use Term::ReadKey;
 
-use vars qw( $user_submit_defaults $submit_defaults $qSubmitDefault $sync_status $message $dep_folder $verbose $log_script $text_header_lines $show_tag $log_tag $force_tag $qsub_extra $cmdline $sanity_expand);  # options
+use vars qw( $user_submit_defaults $submit_defaults $qSubmitDefault $message $dep_folder $verbose $log_script $text_header_lines $show_tag $log_tag $force_tag $qsub_extra $cmdline $sanity_expand);  # options
 
 
 $::VERSION = &CJ::version_info();
@@ -62,7 +61,6 @@ $show_tag          = "program";
 $qsub_extra        = "";
 $log_tag           = "all";
 $log_script        = undef;
-$sync_status 	   = 0;
 $qSubmitDefault    = 1;
 $sanity_expand     = 0;
 #=========================================
@@ -82,16 +80,6 @@ if( -d "$info_dir" ){
 &CJ::my_system("rm $CJlog_error") unless (! -f $CJlog_error);
 
 #=========================================
-
-
-# Dont sync if the command is one of these.
-my @nosync_cmds = qw ( init who help -help -h -Help -HELP prompt version -v install-update sanity);
-my %nosync = map { $_ => 1 } @nosync_cmds;
-
-# Automatic Firebase sync disabled
-
-}
-
 
 my $spec = <<'EOSPEC';
       prompt 	      opens CJ prompt command [undocumented]
@@ -153,8 +141,6 @@ my $spec = <<'EOSPEC';
      access        [<pid>]	                          Go to the package on the remote cluster
 								{ defer{ &CJ::connect_and_cd($pid,$verbose) } }
      goto          [<pid>]	[ditto] [undocumented]      
-     sync 	                                          force sync [nocase]
-		                				{defer{&CJ::sync_forced($sync_status)}}								
      who 	                                          prints out user and agent info [nocase]
      update						  updates installation to the most recent commit on GitHub [nocase]
      config[-update]   [<cluster:/\S+/> [<keyval>...]]	  list|update cluster configuration
