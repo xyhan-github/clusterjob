@@ -352,8 +352,6 @@ my $runinfo={
 
 # add_record locally
 &CJ::add_record($runinfo);
-# write runinfo to FireBaee as well
-&CJ::write2firebase($pid,$runinfo,$date->{epoch},0);
 }
 
 
@@ -538,7 +536,6 @@ my $runinfo={
 
 
 &CJ::add_record($runinfo);
-&CJ::write2firebase($pid,$runinfo, $date->{epoch},0);  # send to CJ server
 }
 
 
@@ -782,7 +779,6 @@ pkgsize       => $pkgsize,
 
 
 &CJ::add_record($runinfo);
-&CJ::write2firebase($pid,$runinfo, $date->{epoch},0);  # send to CJ server
 }
 
 

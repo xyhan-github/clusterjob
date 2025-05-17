@@ -9,7 +9,6 @@ use lib "$Bin";  #for testing
 use lib "$Bin/external/firebase/lib";  
 use lib "$Bin/external/ouch/lib";
 
-use Firebase; 
 use Ouch;
 use File::chdir;
 use CJ;          # contains essential functions
@@ -89,14 +88,7 @@ if( -d "$info_dir" ){
 my @nosync_cmds = qw ( init who help -help -h -Help -HELP prompt version -v install-update sanity);
 my %nosync = map { $_ => 1 } @nosync_cmds;
 
-if($CJKEY && (!exists($nosync{$cjcmd0})) ){
-    #CJ::err("This action needs internet connection!") if (not defined $localIP);
-    eval {
-        &CJ::add_agent_to_remote();  # if there is no agent, add it.
-        $sync_status = &CJ::AutoSync();
-    };
-    
-}
+# Automatic Firebase sync disabled
 
 }
 
