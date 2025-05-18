@@ -18,6 +18,11 @@ To read more about setting path variable in perl, please
 visit: 
 http://perlmaven.com/how-to-change-inc-to-find-perl-modules-in-non-standard-locations
 
+(-)     
+perl needs to be installed along with using cpan or cpanm to install the following dependencies
+
+sudo cpan -i Data::Dumper Data::UUID FindBin File::chdir File::Basename File::Spec IO::Socket::INET IO::Socket::SSL Getopt::Declare  Term::ReadLine JSON::PP JSON::XS Digest::SHA Time::Local Time::Piece Moo HTTP::Thin HTTP::Request::Common JSON URI
+
 
 (-) Set your cluster information:
 You will need to update the following file to reflect your own
