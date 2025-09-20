@@ -1,3 +1,8 @@
+# Info
+
+This is a fork of the no longer maintained version of ClusterJob by H. Monajemi that is updated for use in updated OS and HPC systems.
+In particular, the firebase dependencies have been removed (those are nolonger maintained) and the code is modified to accomodate some recent changes in PERL and MacOS. -- X.Y. Han
+
 # ClusterJob
 Clusterjob, hereafter CJ, is an experiment management system (EMS) for data science. CJ is 
 written mainly in perl and allows submiting computational jobs to clusters in a hassle-free and reproducible manner.
@@ -17,6 +22,7 @@ You can find CJ book project at https://github.com/monajemi/CJ-book
 2. Bekk Blando 
 3. David Donoho
 4. Vardan Papyan
+5. X.Y. Han
 
 
 # How to cite ClusterJob
@@ -47,9 +53,5 @@ note={arXiv:1901.08705},
 year={2019},
 }
 ```
-
-
-
-Copyright 2015 Hatef Monajemi (monajemi@stanford.edu)
 
 
