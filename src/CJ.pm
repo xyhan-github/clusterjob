@@ -2684,9 +2684,37 @@ if(lc($type) eq "clean"){
 sub update_record{
     my ($pid,$new_info) = @_;
     my $new_record = encode_json($new_info);
-    #backup run history file with -i flag
-    my $cmd="sed -i '.bak' 's|.*$pid.*|$new_record|'  $run_history_file";
-    &CJ::my_system($cmd,0);
+    
+    # Create backup file
+    my $backup_file = "$run_history_file.bak";
+    &CJ::my_system("cp $run_history_file $backup_file", 0);
+    
+    # Read the file contents
+    my $contents = &CJ::readFile($run_history_file);
+    return unless defined($contents);
+    
+    # Split into lines, preserving empty lines
+    my @lines = split(/\n/, $contents, -1);
+    
+    # Update the line containing the pid
+    my $updated = 0;
+    for (my $i = 0; $i < @lines; $i++) {
+        if ($lines[$i] =~ /$pid/) {
+            $lines[$i] = $new_record;
+            $updated = 1;
+            last;
+        }
+    }
+    
+    # Write back to file if we found and updated the record
+    if ($updated) {
+        my $new_contents = join("\n", @lines);
+        # Ensure file ends with a newline if original did
+        if ($contents =~ /\n$/) {
+            $new_contents .= "\n" unless $new_contents =~ /\n$/;
+        }
+        &CJ::writeFile($run_history_file, $new_contents);
+    }
 }
 
 
