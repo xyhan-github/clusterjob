@@ -193,7 +193,10 @@ fi
 # inside the container's newer glibc (lets cuDNN 9 sublibs resolve symbols).
 CJ_CONTAINER="<CJ_CONTAINER>"
 if [ -n "\$CJ_CONTAINER" ]; then
-    PY_RUN=(apptainer exec --nv --bind /scratch:/scratch --bind /home:/home --bind /tmp:/tmp "\$CJ_CONTAINER" python)
+    PY_RUN=(apptainer exec --nv \\
+        --bind /scratch:/scratch --bind /home:/home --bind /tmp:/tmp \\
+        --env "PATH=\$PATH" --env "LD_LIBRARY_PATH=\$LD_LIBRARY_PATH" \\
+        "\$CJ_CONTAINER" python)
 else
     PY_RUN=(python)
 fi
@@ -297,7 +300,10 @@ fi
 # inside the container's newer glibc (lets cuDNN 9 sublibs resolve symbols).
 CJ_CONTAINER="<CJ_CONTAINER>"
 if [ -n "\$CJ_CONTAINER" ]; then
-    PY_RUN=(apptainer exec --nv --bind /scratch:/scratch --bind /home:/home --bind /tmp:/tmp "\$CJ_CONTAINER" python)
+    PY_RUN=(apptainer exec --nv \\
+        --bind /scratch:/scratch --bind /home:/home --bind /tmp:/tmp \\
+        --env "PATH=\$PATH" --env "LD_LIBRARY_PATH=\$LD_LIBRARY_PATH" \\
+        "\$CJ_CONTAINER" python)
 else
     PY_RUN=(python)
 fi
