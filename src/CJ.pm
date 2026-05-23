@@ -1722,7 +1722,7 @@ sub show_cluster_config{
 
 sub cluster_config_template{
     # for sorting purposes
-    my @config_keys=('Host','User','Bqs','Alloc','Repo','MAT','MATlib','Python','Pythonlib','R','Rlib');
+    my @config_keys=('Host','User','Bqs','Alloc','Repo','MAT','MATlib','Python','Pythonlib','R','Rlib','CJInstall','Container','ContainerImage');
     my $cluster_config = {
         'Host' => {example=>'35.185.238.124', default=>undef},
         'User' => {example=>$CJID, default=>undef},
@@ -1734,7 +1734,10 @@ sub cluster_config_template{
         'Python' => {example=>undef,default=>'python3.4'},
         'Pythonlib'  => {example=>undef,default=>'pytorch:torchvision:cuda80:pandas:matplotlib:-c soumith'},
         'R'     => {example=>undef,default=>'R'},
-        'Rlib'  => {example=>undef,default=>'ggplot2'}
+        'Rlib'  => {example=>undef,default=>'ggplot2'},
+        'CJInstall'      => {example=>'$GROUP_HOME/<user>/CJinstalled', default=>'$HOME/CJinstalled'},
+        'Container'      => {example=>'$CJInstall/containers/glibc-bridge.sif', default=>undef},
+        'ContainerImage' => {example=>'docker://ubuntu:22.04', default=>'docker://ubuntu:22.04'}
     };
     
     return ($cluster_config,\@config_keys);
