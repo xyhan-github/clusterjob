@@ -179,18 +179,26 @@ my $script =<<'BASH';
 # activate python venv
 source activate <PY_VENV>
 
+# Make conda env's libs reachable by the dynamic linker (libcudnn, libgomp,
+# libcublas, etc.). 'source activate' does not set this by default. Dollar
+# signs are escaped so the outer bash heredoc that builds this script does
+# NOT expand them; they evaluate at INNER-script runtime, after activate.
+if [ -n "\$CONDA_PREFIX" ]; then
+    export LD_LIBRARY_PATH="\$CONDA_PREFIX/lib\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}"
+fi
+
 # Optional Apptainer container (configured via 'Container' in ssh_config).
 # The container is pulled once during cj's setup phase (setup_apptainer_container
 # in Run.pm); here we just wrap python with it so the conda env's python runs
 # inside the container's newer glibc (lets cuDNN 9 sublibs resolve symbols).
 CJ_CONTAINER="<CJ_CONTAINER>"
-if [ -n "$CJ_CONTAINER" ]; then
-    PY_RUN=(apptainer exec --nv --bind /scratch:/scratch --bind /home:/home --bind /tmp:/tmp "$CJ_CONTAINER" python)
+if [ -n "\$CJ_CONTAINER" ]; then
+    PY_RUN=(apptainer exec --nv --bind /scratch:/scratch --bind /home:/home --bind /tmp:/tmp "\$CJ_CONTAINER" python)
 else
     PY_RUN=(python)
 fi
 
-"${PY_RUN[@]}" <<HERE
+"\${PY_RUN[@]}" <<HERE
 # make sure each run has different random number stream
 import runpy
 import os,sys,pickle,numpy,random;
@@ -275,18 +283,26 @@ my $script =<<'BASH';
 # activate python venv
 source activate <PY_VENV>
 
+# Make conda env's libs reachable by the dynamic linker (libcudnn, libgomp,
+# libcublas, etc.). 'source activate' does not set this by default. Dollar
+# signs are escaped so the outer bash heredoc that builds this script does
+# NOT expand them; they evaluate at INNER-script runtime, after activate.
+if [ -n "\$CONDA_PREFIX" ]; then
+    export LD_LIBRARY_PATH="\$CONDA_PREFIX/lib\${LD_LIBRARY_PATH:+:\$LD_LIBRARY_PATH}"
+fi
+
 # Optional Apptainer container (configured via 'Container' in ssh_config).
 # The container is pulled once during cj's setup phase (setup_apptainer_container
 # in Run.pm); here we just wrap python with it so the conda env's python runs
 # inside the container's newer glibc (lets cuDNN 9 sublibs resolve symbols).
 CJ_CONTAINER="<CJ_CONTAINER>"
-if [ -n "$CJ_CONTAINER" ]; then
-    PY_RUN=(apptainer exec --nv --bind /scratch:/scratch --bind /home:/home --bind /tmp:/tmp "$CJ_CONTAINER" python)
+if [ -n "\$CJ_CONTAINER" ]; then
+    PY_RUN=(apptainer exec --nv --bind /scratch:/scratch --bind /home:/home --bind /tmp:/tmp "\$CJ_CONTAINER" python)
 else
     PY_RUN=(python)
 fi
 
-"${PY_RUN[@]}" <<HERE
+"\${PY_RUN[@]}" <<HERE
 
 # make sure each run has different random number stream
 import runpy
