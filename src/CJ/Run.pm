@@ -196,6 +196,7 @@ TEXT
     
 ## Check setup for the program:
 $self->setup_conda_venv($pid,$ssh) if($program_type eq 'python');
+$self->setup_apptainer_container($pid,$ssh) if($program_type eq 'python' && defined($ssh->{container}) && $ssh->{container} ne "");
 $self->setup_R_env($pid,$ssh) if ($program_type eq 'R');
 $self->check_LMOD_avail($pid,$ssh) if ($program_type eq 'matlab');
     
@@ -849,6 +850,47 @@ sub setup_conda_venv{
     
 }
 
+
+
+
+
+##################################
+sub setup_apptainer_container{
+##################################
+    my ($self,$pid,$ssh) = @_;
+
+    my $container = $ssh->{container};
+    my $image     = $ssh->{container_image};
+    return unless (defined($container) && $container ne "");
+
+    &CJ::message("Checking Apptainer container at $container (source: $image)...");
+
+    # Build a one-shot bash script that pulls the container if missing.
+    my $pull_script_name = "${pid}_apptainer_pull.sh";
+    my $pull_script      = &CJ::Scripts::build_apptainer_pull_bash($container, $image);
+    &CJ::writeFile("/tmp/$pull_script_name", $pull_script);
+
+    # In deploy modes we don't submit jobs; skip the pull and the verify so
+    # the user can deploy without a configured container yet. They can
+    # provision it later via `cj install container <machine>`.
+    return if ($self->{runflag} =~ /deploy$/);
+
+    my $cmd = "scp /tmp/$pull_script_name $ssh->{account}:.";
+    &CJ::my_system($cmd,$self->{verbose});
+    $cmd = "ssh $ssh->{account} 'source ~/.bashrc; bash -l $pull_script_name > /tmp/${pid}_apptainer_pull.txt 2>&1; rm $pull_script_name'";
+    &CJ::my_system($cmd,$self->{verbose});
+
+    # Verify the container is now in place before submitting any jobs.
+    my $response = `ssh $ssh->{account} 'test -f $container && echo OK || echo MISSING' 2>$CJlog_error`;
+    chomp($response);
+    if ($response !~ /^OK$/){
+        &CJ::message("CJ failed to provision Apptainer container at $container on $self->{machine}");
+        &CJ::message("***************************************************************");
+        $cmd = "ssh $ssh->{account} 'cat /tmp/${pid}_apptainer_pull.txt' ";
+        system($cmd);
+        exit 1;
+    }
+}
 
 
 

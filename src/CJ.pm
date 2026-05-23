@@ -2007,7 +2007,23 @@ sub parse_ssh_config{
     my ($remote_r_module)  = $this_machine_string =~ /\bR\b[\t\s]+?(.*)/i;
     $remote_r_module       = remove_white_space($remote_r_module);
 
-    
+    my ($cj_install)  = $this_machine_string =~ /CJInstall[\t\s]+?(.*)/i;
+    $cj_install       = remove_white_space($cj_install) if defined($cj_install);
+    # Default: $HOME/CJinstalled (the historical implicit location)
+    $cj_install     //= "\$HOME/$app_install_dir";
+
+    my ($container)  = $this_machine_string =~ /\bContainer\b[\t\s]+?(.*)/i;
+    $container       = remove_white_space($container) if defined($container);
+    # Allow Container to reference $CJInstall, e.g. "$CJInstall/containers/foo.sif"
+    if (defined($container)) {
+        $container =~ s/\$\{?CJInstall\}?/$cj_install/g;
+    }
+
+    my ($container_image)  = $this_machine_string =~ /ContainerImage[\t\s]+?(.*)/i;
+    $container_image       = remove_white_space($container_image) if defined($container_image);
+    # Default source image: minimal Ubuntu 22.04 (glibc 2.35), enough to
+    # provide newer libm symbols for cuDNN >=9 mounted from the host conda env.
+    $container_image     //= "docker://ubuntu:22.04";
 
     
     my $account  = $user . "@" . $host;
@@ -2025,6 +2041,9 @@ sub parse_ssh_config{
     $ssh_config->{'pylib'}           = $remote_python_lib;
     $ssh_config->{'r'}               = $remote_r_module;
     $ssh_config->{'rlib'}            = $remote_r_lib;
+    $ssh_config->{'install_dir'}     = $cj_install;
+    $ssh_config->{'container'}       = $container;
+    $ssh_config->{'container_image'} = $container_image;
     
     
     return $ssh_config;
@@ -3052,13 +3071,17 @@ sub install_software{
     
     &CJ::message("Installing $app on $machine.");
     
-    my $installObj = CJ::Install->new($app,$machine,undef);
+    # Pass the per-machine install prefix from ssh_config (CJInstall field).
+    # Falls back to "$HOME/CJinstalled" when not set.
+    my $ssh = CJ::host($machine);
+    my $installObj = CJ::Install->new($app,$machine,$ssh->{install_dir});
     $installObj->anaconda($force_tag) if $lc_app eq 'anaconda';
     $installObj->miniconda($force_tag) if $lc_app eq 'miniconda';
     $installObj->cvx($force_tag) if $lc_app eq 'cvx';
     $installObj->composer($force_tag) if $lc_app eq 'composer';
     $installObj->rstats($force_tag) if $lc_app eq 'r';
     $installObj->java($force_tag) if $lc_app eq 'java';
+    $installObj->container($force_tag) if $lc_app eq 'container';
 
 }
 

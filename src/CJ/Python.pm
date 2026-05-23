@@ -178,8 +178,19 @@ my $script =<<'BASH';
     
 # activate python venv
 source activate <PY_VENV>
-    
-python <<HERE
+
+# Optional Apptainer container (configured via 'Container' in ssh_config).
+# The container is pulled once during cj's setup phase (setup_apptainer_container
+# in Run.pm); here we just wrap python with it so the conda env's python runs
+# inside the container's newer glibc (lets cuDNN 9 sublibs resolve symbols).
+CJ_CONTAINER="<CJ_CONTAINER>"
+if [ -n "$CJ_CONTAINER" ]; then
+    PY_RUN=(apptainer exec --nv --bind /scratch:/scratch --bind /home:/home --bind /tmp:/tmp "$CJ_CONTAINER" python)
+else
+    PY_RUN=(python)
+fi
+
+"${PY_RUN[@]}" <<HERE
 # make sure each run has different random number stream
 import runpy
 import os,sys,pickle,numpy,random;
@@ -221,8 +232,10 @@ conda deactivate
 BASH
     
 my $venv_name = "CJ_python_venv";
+my $container = $ssh->{'container'} // "";
     
 $script =~ s|<PY_VENV>|$venv_name|;
+$script =~ s|<CJ_CONTAINER>|$container|g;
     
 return $script;
     
@@ -262,7 +275,18 @@ my $script =<<'BASH';
 # activate python venv
 source activate <PY_VENV>
 
-python <<HERE
+# Optional Apptainer container (configured via 'Container' in ssh_config).
+# The container is pulled once during cj's setup phase (setup_apptainer_container
+# in Run.pm); here we just wrap python with it so the conda env's python runs
+# inside the container's newer glibc (lets cuDNN 9 sublibs resolve symbols).
+CJ_CONTAINER="<CJ_CONTAINER>"
+if [ -n "$CJ_CONTAINER" ]; then
+    PY_RUN=(apptainer exec --nv --bind /scratch:/scratch --bind /home:/home --bind /tmp:/tmp "$CJ_CONTAINER" python)
+else
+    PY_RUN=(python)
+fi
+
+"${PY_RUN[@]}" <<HERE
 
 # make sure each run has different random number stream
 import runpy
@@ -328,7 +352,9 @@ BASH
 
     
 my $venv_name = "CJ_python_venv";
+my $container = $ssh->{'container'} // "";
 $script =~ s|<PY_VENV>|$venv_name|;
+$script =~ s|<CJ_CONTAINER>|$container|g;
     
     
     

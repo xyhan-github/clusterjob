@@ -18,7 +18,11 @@ sub new {
  	my $class= shift;
     my ($app,$machine,$path) = @_;
     
-    $path //= "CJinstalled";  #SOME_DEFAULT # This path relative to ~/
+    # $path is the FULL absolute install prefix on the remote cluster,
+    # e.g. "$HOME/CJinstalled" or "$GROUP_HOME/xiaoyanh/CJinstalled".
+    # Bash variables in $path are preserved verbatim and expand at runtime.
+    # Default falls back to the historical $HOME/CJinstalled location.
+    $path //= "\$HOME/CJinstalled";
     
     my $self = bless {
         app  => $app,
@@ -61,7 +65,7 @@ sub __apply_install{
     $cmd = "ssh $ssh->{account} 'cd \$HOME && bash -l $filename' ";
     system($cmd);
     
-    $cmd = "ssh $ssh->{account} 'if [ -d \$HOME/$self->{path} ] ; then mv \$HOME/$filename \$HOME/$self->{path}/; fi' ";
+    $cmd = "ssh $ssh->{account} 'if [ -d $self->{path} ] ; then mv \$HOME/$filename $self->{path}/; fi' ";
     system($cmd);
     
     &CJ::message("----- END BASH ON $self->{'machine'}-----",1);
@@ -84,7 +88,7 @@ sub java{
     
     my $java    = 'jdk-8u171-linux-x64';
     my $distro  ='http://download.oracle.com/otn-pub/java/jdk/8u171-b11/512cd62ec5174c3487ac17c61aaa89e8';
-    my $installpath = "\$HOME/$self->{path}/java";
+    my $installpath = "$self->{path}/java";
     #-------------------------------------------------------
     
     
@@ -157,7 +161,7 @@ sub __curl{
     
     my $curl    = 'curl-7.47.1';
     my $distro  ='https://curl.haxx.se/download';
-    my $installpath = "\$HOME/$self->{path}/curl";
+    my $installpath = "$self->{path}/curl";
     #-------------------------------------------------------
     
     
@@ -237,7 +241,7 @@ sub __xz{
     
     my $xz    = 'xz-5.2.2';
     my $distro  ='http://tukaani.org/xz';
-    my $installpath = "\$HOME/$self->{path}/xz";
+    my $installpath = "$self->{path}/xz";
     #-------------------------------------------------------
     
 
@@ -319,7 +323,7 @@ sub rstats{
     
 my $R = 'R-3.5.0';
 my $distro  ='https://cloud.r-project.org/src/base/R-3';
-my $installpath = "\$HOME/$self->{path}/R";
+my $installpath = "$self->{path}/R";
     
 # -------------------
 my $install_bash_script  =<<'BASH';
@@ -446,7 +450,7 @@ sub composer{
 my $distro="https://composer.github.io/installer.sig";
 my $composer = "composer-setup.php";
 my $installer   = "https://getcomposer.org/installer";
-my $installpath = "\$HOME/$self->{path}/PHP/composer";
+my $installpath = "$self->{path}/PHP/composer";
     
 # -------------------
 my $install_bash_script =<<'BASH';
@@ -545,6 +549,39 @@ return 1;
 
 
 ##############
+sub container{
+##############
+    # Provision (pull) the Apptainer/Singularity container declared in
+    # ssh_config under the 'Container' field, fetching the image specified
+    # in 'ContainerImage'. Skips the pull if the .sif file already exists,
+    # so this command is safe to re-run. Use '-f' to force a fresh pull.
+    my $self = shift;
+    my ($force_tag) = @_;
+    
+    my $ssh   = CJ::host($self->{machine});
+    my $container = $ssh->{container};
+    my $image     = $ssh->{container_image};
+    
+    if (!defined($container) || $container eq "") {
+        &CJ::err("No 'Container' field configured for machine '$self->{machine}' in ssh_config. "
+               . "Add a line like:\n  Container\t\$CJInstall/containers/glibc-bridge.sif");
+    }
+    if (!defined($image) || $image eq "") {
+        &CJ::err("No 'ContainerImage' field configured for machine '$self->{machine}' in ssh_config.");
+    }
+    
+    &CJ::message("Installing Apptainer container at $container (source: $image)");
+    
+    my $install_bash_script = &CJ::Scripts::build_apptainer_pull_bash($container, $image);
+    $self->__apply_install($force_tag, $container, $install_bash_script);
+    
+    return $container;
+}
+
+
+
+
+##############
 sub miniconda{
     ##########
     
@@ -554,7 +591,7 @@ my ($force_tag) = @_;
     
 my $miniconda = "Miniconda3-latest-Linux-x86_64";
 my $distro  = "https://repo.continuum.io/miniconda/${miniconda}.sh";
-my $installpath = "\$GROUP_HOME/xiaoyanh/$self->{path}/miniconda";
+my $installpath = "$self->{path}/miniconda";
     
 
 # -------------------
@@ -645,7 +682,7 @@ sub anaconda{
 
 my $anaconda = "Anaconda3-4.4.0-Linux-x86_64";
 my $distro  = "https://repo.continuum.io/archive/${anaconda}.sh";
-my $installpath = "\$HOME/$self->{path}/anaconda";
+my $installpath = "$self->{path}/anaconda";
     
     
 # -------------------
@@ -739,7 +776,7 @@ sub cvx {
 
 my $cvx = "cvx-rd";
 my $distro  = "http://web.cvxr.com/cvx/${cvx}.tar.gz";
-my $installpath = "\$HOME/$self->{path}";
+my $installpath = "$self->{path}";
 
     
 # -------------------

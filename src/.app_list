@@ -5,6 +5,7 @@
 "matlab":{"version":"", "space":"", "install_time":""},
 "composer":{"version":"latest", "space":"", "install_time":""},
 "r":{"version":"3.5.0", "space":"", "install_time":"15-20 min"},
-"java":{"version":"jdk-8u171-linux-x64", "space":"671M", "install_time":"   1  min"}
+"java":{"version":"jdk-8u171-linux-x64", "space":"671M", "install_time":"   1  min"},
+"container":{"version":"Container (ssh_config:Container/ContainerImage)","space":"~80M","install_time":"  5-30 sec"}
 }
 

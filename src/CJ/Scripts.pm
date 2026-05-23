@@ -186,6 +186,41 @@ sub build_nloop_code
 
 
 
+##################################
+sub build_apptainer_pull_bash{
+##################################
+    my ($container, $image) = @_;
+    $image //= "docker://ubuntu:22.04";
+
+    my $script =<<'BASH';
+#!/bin/bash -l
+
+CJ_CONTAINER="<CONTAINER>"
+CJ_CONTAINER_IMAGE="<CONTAINER_IMAGE>"
+
+if [ -z "$CJ_CONTAINER" ]; then
+    echo "Apptainer container path is empty; skipping pull."
+    exit 0
+fi
+
+if [ -f "$CJ_CONTAINER" ]; then
+    echo "Apptainer container already present at $CJ_CONTAINER"
+    exit 0
+fi
+
+echo "Pulling Apptainer container from $CJ_CONTAINER_IMAGE to $CJ_CONTAINER (one-time)..."
+mkdir -p "$(dirname "$CJ_CONTAINER")"
+apptainer pull "$CJ_CONTAINER" "$CJ_CONTAINER_IMAGE"
+BASH
+
+    $script =~ s|<CONTAINER>|$container|g;
+    $script =~ s|<CONTAINER_IMAGE>|$image|g;
+    return $script;
+}
+
+
+
+
 ##########################
 sub build_conda_venv_bash{
 ##########################
