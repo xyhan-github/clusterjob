@@ -710,6 +710,12 @@ sub findIdxTagRange{
         #FIX
         
         CJ::err("Index tag cannot be established for $this_forline") unless ($idx_tag);
+
+        # A loop variable must be unique across the parallel FOR loops. Reusing the
+        # same name (e.g., two 'for net_idx in ...' loops) collapses the range hash
+        # and yields the wrong number of submitted/total jobs.
+        CJ::err("Duplicate loop index '$idx_tag' detected in parallel FOR loops. Each loop variable must be unique; please rename one of the '$idx_tag' loops.") if (grep { $_ eq $idx_tag } @idx_tags);
+
         push @idx_tags, $idx_tag;   # This will keep order.
         
         
